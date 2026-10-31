@@ -18,6 +18,8 @@ public static class DocTypes
         public const string VideoText = "videoText";
         public const string VideoUrl = "videoUrl";
         public const string VideoImage = "videoImage";
+        public const string Phone = "phone";
+        public const string Accreditations = "accreditations";
         public static string MessageTitle(int n) => $"message{n}Title";
         public static string MessageText(int n) => $"message{n}Text";
         public static string MessageLink(int n) => $"message{n}Link";

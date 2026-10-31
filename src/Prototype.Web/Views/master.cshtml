@@ -5,42 +5,70 @@
     var description = ViewData["Description"] as string ?? Model.Description();
     var noticeText = home.Text(DocTypes.Home.NoticeText);
     var noticeLink = home.Text(DocTypes.Home.NoticeLink);
+    var phone = home.Text(DocTypes.Home.Phone) ?? "01245 26 56 11";
+    var phoneHref = "tel:+44" + new string(phone.Where(char.IsDigit).ToArray()).TrimStart('0');
     var section = ViewData["Section"] as string ?? Model.AncestorOrSelf(2)?.ContentType.Alias;
     var nav = home.Children()?.Where(c => c.IsVisible()).ToList() ?? [];
+    var social = new (string Name, string Url, string? Icon)[]
+    {
+        ("TikTok", "https://www.tiktok.com/@chelmsford_college", "tiktok"),
+        ("Facebook", "https://www.facebook.com/ChelmsfordCollege", "facebook"),
+        ("YouTube", "https://www.youtube.com/user/chelmsfordcollege", "youtube"),
+        ("Instagram", "https://www.instagram.com/chelmsfordcol/", "instagram"),
+        ("LinkedIn", "https://www.linkedin.com/school/chelmsford-college/", null)
+    };
 }
 <!doctype html>
 <html lang="en-GB" class="no-js">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>@(Model.Id == home.Id && ViewData["Title"] is null ? "Chelmsford College | Courses, apprenticeships and adult learning" : $"{title} | Chelmsford College")</title>
+    <title>@(Model.Id == home.Id && ViewData["Title"] is null ? "Chelmsford College | Courses, apprenticeships and adult learning in Essex" : $"{title} | Chelmsford College")</title>
     <meta name="description" content="@description">
     <meta name="theme-color" content="#007ac5">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;600;700;800&display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800&family=Open+Sans:wght@400;600;700;800&display=swap">
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true">
     @await RenderSectionAsync("Head", required: false)
 </head>
 <body>
     <a class="skip-link" href="#main">Skip to main content</a>
 
-    @if (noticeText is not null)
-    {
-        <div class="notice">
-            <div class="container">
-                <span class="notice__dot" aria-hidden="true"></span>
-                @if (noticeLink is not null)
+    @{
+        void SocialLinks()
+        {
+            <ul class="social">
+                @foreach (var s in social)
                 {
-                    <a href="@noticeLink">@noticeText</a>
+                    <li>
+                        <a href="@s.Url" rel="noopener">
+                            @if (s.Icon is not null)
+                            {
+                                <span class="social-icon" style="--icon: url('/images/social/@(s.Icon).svg')" aria-hidden="true"></span>
+                            }
+                            else
+                            {
+                                <span class="social-icon social-icon--linkedin" aria-hidden="true">in</span>
+                            }
+                            <span class="visually-hidden">Chelmsford College on @s.Name</span>
+                        </a>
+                    </li>
                 }
-                else
-                {
-                    <span>@noticeText</span>
-                }
-            </div>
-        </div>
+            </ul>
+        }
     }
+
+    <div class="topbar">
+        <div class="container">
+            <a href="@phoneHref" style="font-weight:700;text-decoration:none">@Icons.Get("phone") @phone</a>
+            @{ SocialLinks(); }
+            <ul class="topbar__links">
+                <li><a href="/courses/">@Icons.Get("search") Search</a></li>
+                <li><a href="/umbraco">Log in</a></li>
+            </ul>
+        </div>
+    </div>
 
     <header class="site-header">
         <div class="container">
@@ -56,11 +84,28 @@
                     {
                         <li><a href="@item.Url()" aria-current="@(section == item.ContentType.Alias ? "page" : null)">@item.Name</a></li>
                     }
-                    <li class="nav-cta"><a class="button button--block" href="/courses/">Apply for a course</a></li>
+                    <li class="nav-cta"><a class="button button--green button--caps button--block" href="/courses/">Apply now</a></li>
                 </ul>
             </nav>
         </div>
     </header>
+
+    @if (noticeText is not null)
+    {
+        <div class="notice">
+            <div class="container">
+                @Icons.Get("calendar")
+                @if (noticeLink is not null)
+                {
+                    <a href="@noticeLink">@noticeText</a>
+                }
+                else
+                {
+                    <span>@noticeText</span>
+                }
+            </div>
+        </div>
+    }
 
     <main id="main" tabindex="-1">
         @RenderBody()
@@ -71,34 +116,32 @@
             <div class="footer-grid">
                 <div>
                     <img src="/images/brand/cc-logo-white.png" alt="Chelmsford College" width="1785" height="353" loading="lazy">
-                    <p>Moulsham Street campus and Princes Road campus, Chelmsford, Essex.</p>
-                </div>
-                <div>
-                    <h2>Study with us</h2>
                     <ul>
                         <li><a href="/courses/">Find a course</a></li>
                         <li><a href="/events/">Open events</a></li>
-                        <li><a href="/courses/?q=apprenticeship">Apprenticeships</a></li>
-                    </ul>
-                </div>
-                <div>
-                    <h2>Students and parents</h2>
-                    <ul>
                         <li><a href="/pay/">Pay online</a></li>
-                        <li><a href="mailto:careersadvicezone@chelmsford.ac.uk">Careers Advice Zone</a></li>
-                        <li><a href="mailto:studentfees@chelmsford.ac.uk">Student fees</a></li>
+                        <li><a href="/umbraco">Log in</a></li>
                     </ul>
                 </div>
                 <div>
-                    <h2>About this site</h2>
-                    <ul>
-                        <li><a href="#">Accessibility statement</a></li>
-                        <li><a href="#">Privacy and cookies</a></li>
-                        <li><a href="/umbraco">Staff login (CMS)</a></li>
-                    </ul>
+                    <h2>Moulsham Street campus</h2>
+                    <p>Moulsham Street<br>Chelmsford<br>CM2 0JQ</p>
+                    <p><a href="https://www.google.com/maps/search/?api=1&query=Chelmsford+College+Moulsham+Street+CM2+0JQ" rel="noopener">@Icons.Get("pin") Map and directions</a></p>
+                </div>
+                <div>
+                    <h2>Princes Road campus</h2>
+                    <p>Princes Road<br>Chelmsford<br>CM2 9DE</p>
+                    <p><a href="https://www.google.com/maps/search/?api=1&query=Chelmsford+College+Princes+Road+CM2+9DE" rel="noopener">@Icons.Get("pin") Map and directions</a></p>
+                </div>
+                <div>
+                    <h2>Call us</h2>
+                    <p class="footer-phone"><a href="@phoneHref">@phone</a></p>
+                    <h2>Find us on</h2>
+                    @{ SocialLinks(); }
                 </div>
             </div>
             <div class="footer-bottom">
+                <p>© Chelmsford College · <a href="#">Accessibility statement</a> · <a href="#">Privacy policy</a> · <a href="#">Cookie policy</a></p>
                 <p>Prototype built by Zim Digital for Chelmsford College's website tender. Course data from the college's demo course tables; people and payments are made up.</p>
             </div>
         </div>

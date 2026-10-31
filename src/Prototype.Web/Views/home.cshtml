@@ -36,7 +36,7 @@
             <label for="hero-search">What would you like to study?</label>
             <div class="course-search__row">
                 <input id="hero-search" type="search" name="q" autocomplete="off" placeholder="For example: chef, nursing, electrician">
-                <button class="button" type="submit">@Icons.Get("search") Search courses</button>
+                <button class="button button--green button--caps" type="submit">@Icons.Get("search") Search</button>
             </div>
             <p class="course-search__hint">Or <a href="/courses/">browse all courses</a>, <a href="/courses/?q=t%20level">T Levels</a> and <a href="/courses/?q=apprenticeship">apprenticeships</a></p>
         </form>
@@ -49,6 +49,15 @@
         }
     </div>
 </section>
+
+<nav class="container quick-links-band" aria-label="Quick links">
+    <ul class="quick-links">
+        <li><a href="/courses/">@Icons.Get("search") Find a course <span>Full time, part time and adult courses</span></a></li>
+        <li><a href="/courses/">@Icons.Get("apply") Apply now <span>Applications open for September 2027</span></a></li>
+        <li><a href="/pay/">@Icons.Get("card") Pay online <span>Deposits, materials fees and trips</span></a></li>
+        <li><a href="/courses/?q=apprenticeship">@Icons.Get("briefcase") Employers <span>Apprenticeships and training for your staff</span></a></li>
+    </ul>
+</nav>
 
 <section class="section" aria-labelledby="subjects-heading">
     <div class="container">
@@ -131,6 +140,20 @@
                     <partial name="_EventCard" model="e" />
                 }
             </div>
+        </div>
+    </section>
+}
+@if (cms.Text(DocTypes.Home.Accreditations) is { } accreditations)
+{
+    <section class="section" aria-labelledby="accreditations-heading">
+        <div class="container">
+            <h2 id="accreditations-heading" style="font-size:1.25rem;text-align:center">Accreditations and partnerships</h2>
+            <ul class="accreditations">
+                @foreach (var a in accreditations.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+                {
+                    <li>@a</li>
+                }
+            </ul>
         </div>
     </section>
 }

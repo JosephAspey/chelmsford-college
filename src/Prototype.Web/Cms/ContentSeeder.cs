@@ -135,6 +135,8 @@ public sealed class ContentSeeder(
             Add(t, textarea, DocTypes.Home.VideoText, "Text", "video", "Video");
             Add(t, text, DocTypes.Home.VideoUrl, "YouTube link", "video", "Video", "Paste the video's YouTube address. It only loads when someone presses play, so no cookies are set before then.");
             Add(t, image, DocTypes.Home.VideoImage, "Cover image", "video", "Video");
+            Add(t, text, DocTypes.Home.Phone, "Phone number", "contact", "Contact and accreditations", "Shown in the top bar and footer of every page");
+            Add(t, textarea, DocTypes.Home.Accreditations, "Accreditations", "contact", "Contact and accreditations", "One per line, shown near the foot of the home page");
             AddSeo(t, textarea);
         }, children: [courses, events, payments]);
 
@@ -265,6 +267,9 @@ public sealed class ContentSeeder(
             [DocTypes.Home.VideoHeading] = "See college life for yourself",
             [DocTypes.Home.VideoText] = "Take a look around our campuses, workshops and studios, and hear from students about their first year.",
             [DocTypes.Home.VideoImage] = Pick("Students Learning"),
+            [DocTypes.Home.Phone] = "01245 26 56 11",
+            // As listed on the college's current website
+            [DocTypes.Home.Accreditations] = string.Join('\n', "Ofsted: Good provider", "Disability Confident Committed", "Mindful Employer", "matrix Standard", "CIMSPA Education Partner", "AoC Jobs Recruiter", "Skills Builder Partnership", "Cyber Essentials Certified", "East of England Energy Association"),
             [DocTypes.MetaDescription] = "Chelmsford College: full-time courses, T Levels, apprenticeships and adult learning in Chelmsford, Essex."
         });
 
