@@ -1,0 +1,18 @@
+<Project Sdk="Aspire.AppHost.Sdk/13.6.4">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <UserSecretsId>chelmsford-prototype-apphost-7c2d41e9</UserSecretsId>
+    <!-- Run with `dotnet run`, not the Aspire CLI bundle -->
+    <NoWarn>$(NoWarn);ASPIRE010</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Aspire.Hosting.SqlServer" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Prototype.Web\Prototype.Web.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,71 @@
+﻿@inherits UmbracoViewPage
+@{
+    Layout = "master.cshtml";
+    var e = EventItem.From(Model);
+    var image = e.Image;
+    var bookingLink = Model.Text(DocTypes.Event.BookingLink);
+    var bookingText = Model.Text(DocTypes.Event.BookingText) ?? "Book your place";
+    var body = Model.Rich(DocTypes.Event.Body);
+    ViewData["Description"] = e.Summary;
+    ViewData["Section"] = DocTypes.EventsPage.Alias;
+}
+
+@section Head {
+    <script type="application/ld+json">
+        @Html.Raw(System.Text.Json.JsonSerializer.Serialize(new Dictionary<string, object?>
+        {
+            ["@context"] = "https://schema.org",
+            ["@type"] = "Event",
+            ["name"] = e.Name,
+            ["startDate"] = e.Start.ToString("s"),
+            ["endDate"] = e.End?.ToString("s"),
+            ["location"] = new Dictionary<string, string> { ["@type"] = "Place", ["name"] = e.Location ?? "Chelmsford College" },
+            ["description"] = e.Summary,
+            ["organizer"] = new Dictionary<string, string> { ["@type"] = "CollegeOrUniversity", ["name"] = "Chelmsford College" }
+        }))
+    </script>
+}
+
+<div class="page-header">
+    <div class="container">
+        <nav class="breadcrumbs" aria-label="Breadcrumb"><ol><li><a href="/">Home</a></li><li><a href="/events/">Events</a></li></ol></nav>
+        <span class="tag tag--green">@e.Type</span>
+        <h1 style="margin-top:.5rem">@e.Name</h1>
+        @if (e.Summary is not null) { <p class="lead">@e.Summary</p> }
+    </div>
+</div>
+
+<div class="container course-layout">
+    <div>
+        @if (image is not null)
+        {
+            <img src="@image.Crop(1200, 630)" alt="" width="1200" height="630" style="border-radius:var(--radius);margin-bottom:1.5rem">
+        }
+        <div class="rich-text">@body</div>
+    </div>
+
+    <aside class="course-aside" aria-label="Event details">
+        <dl class="event-details">
+            <div><dt>@Icons.Get("calendar") Date</dt><dd>@e.Date</dd></div>
+            <div><dt>@Icons.Get("clock") Time</dt><dd>@e.Times</dd></div>
+            @if (e.Location is not null)
+            {
+                <div><dt>@Icons.Get("pin") Where</dt><dd>@e.Location</dd></div>
+            }
+        </dl>
+        <div class="aside-card" id="book" tabindex="-1">
+            @if (bookingLink is not null)
+            {
+                <h2>Book your place</h2>
+                <p>Booking is free. Tell us who's coming and we'll confirm by email with directions.</p>
+                <a class="button button--block" href="@bookingLink">@bookingText</a>
+            }
+            else
+            {
+                <h2>Just turn up</h2>
+                <p>There's no need to book. Come along at any time during the event.</p>
+            }
+            <p style="margin:1rem 0 0"><a href="/events/calendar/@(Model.Key).ics">@Icons.Get("download") Add to calendar</a></p>
+        </div>
+    </aside>
+</div>

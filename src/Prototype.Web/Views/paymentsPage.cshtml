@@ -1,0 +1,35 @@
+﻿@inherits UmbracoViewPage
+@{
+    Layout = "master.cshtml";
+    var icons = new Dictionary<PaymentType, string> { [PaymentType.Deposit] = "graduation", [PaymentType.Materials] = "toolbox", [PaymentType.Trip] = "bus" };
+}
+
+<div class="page-header">
+    <div class="container">
+        <nav class="breadcrumbs" aria-label="Breadcrumb"><ol><li><a href="/">Home</a></li><li aria-current="page">Pay online</li></ol></nav>
+        <h1>@Model.Text(DocTypes.PaymentsPage.Heading)</h1>
+        <p class="lead">@Model.Text(DocTypes.PaymentsPage.Intro)</p>
+    </div>
+</div>
+
+<div class="container pay-layout">
+    <div>
+        <h2>What would you like to pay?</h2>
+        <ul class="pay-options">
+            @foreach (var type in Enum.GetValues<PaymentType>())
+            {
+                <li class="pay-option">
+                    <span class="pay-option__icon">@Icons.Get(icons[type])</span>
+                    <div>
+                        <h2><a href="/pay/@type.Slug()/">@type.ShortName()</a></h2>
+                        <p>@type.Summary()</p>
+                    </div>
+                </li>
+            }
+        </ul>
+        <p class="secure-note" style="margin-top:1.5rem">@Icons.Get("lock") Payments are taken by the college's payment provider. Card details never reach the college's website.</p>
+    </div>
+    <aside aria-label="Help with paying">
+        <div class="aside-card rich-text">@Model.Rich(DocTypes.PaymentsPage.HelpText)</div>
+    </aside>
+</div>

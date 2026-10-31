@@ -1,0 +1,45 @@
+@inherits UmbracoViewPage<PaymentStepViewModel>
+@{
+    Layout = "Payments/_StepLayout";
+    ViewData["StepTitle"] = "Payment complete";
+    var p = Model.Payment!;
+    var paid = TimeZoneInfo.ConvertTimeFromUtc(p.PaidUtc ?? p.CreatedUtc, TimeZoneInfo.FindSystemTimeZoneById("Europe/London"));
+}
+
+<div class="panel-success">
+    <h1>Payment complete</h1>
+    <p>Your reference is<br><strong>@p.Reference</strong></p>
+</div>
+
+<p>We'll email a copy of this receipt to <strong>@p.PayerEmail</strong>. Keep your reference in case you need to contact us about this payment.</p>
+
+<h2>Your receipt</h2>
+<dl class="summary-list">
+    <div><dt>Reference</dt><dd>@p.Reference</dd></div>
+    <div><dt>Paid on</dt><dd>@paid.ToString("d MMMM yyyy 'at' HH:mm", SiteContent.Uk)</dd></div>
+    <div><dt>Student</dt><dd>@p.LearnerName (@p.LearnerRef)</dd></div>
+    @if (Model.CourseTitle is not null) { <div><dt>Course</dt><dd>@Model.CourseTitle</dd></div> }
+    @foreach (var item in p.Items)
+    {
+        <div><dt>@item.Description</dt><dd>@SiteContent.Money(item.Amount)</dd></div>
+    }
+    <div><dt>Total paid</dt><dd><strong>@SiteContent.Money(p.Amount)</strong></dd></div>
+    <div><dt>Paid by</dt><dd>@p.PayerName</dd></div>
+</dl>
+
+<h2>What happens next</h2>
+<p>
+    @switch (p.Type)
+    {
+        case PaymentType.Deposit:
+            <text>Your place is secured. The deposit comes off your course fees when you enrol, and we'll be in touch about enrolment day.</text>
+            break;
+        case PaymentType.Materials:
+            <text>Your kit will be ready to collect from your department in the first week of term.</text>
+            break;
+        default:
+            <text>Your place on the trip is booked. Your tutor will send details nearer the time.</text>
+            break;
+    }
+</p>
+<p><a class="button button--outline" href="/pay/">Make another payment</a> <button type="button" class="link-button" style="margin-left:1rem" onclick="window.print()">Print this receipt</button></p>

@@ -1,0 +1,55 @@
+@inherits UmbracoViewPage<PaymentStepViewModel>
+@{
+    Layout = "Payments/_StepLayout";
+    ViewData["StepTitle"] = "Choose what to pay";
+    var t = Model.Type;
+    var account = Model.Account!;
+    var f = Model.Form;
+    Model.Errors.TryGetValue("items", out var itemsError);
+}
+
+<h1>@(t == PaymentType.Deposit ? "Your course deposit" : $"What would you like to pay for?")</h1>
+<p>For <strong>@account.FullName</strong>@(Model.CourseTitle is null ? "" : $", {Model.CourseTitle}").</p>
+
+@if (account.Charges.Count == 0)
+{
+    <div class="aside-card">
+        <h2>Nothing to pay</h2>
+        <p>@(t == PaymentType.Deposit ? "The deposit for this application has already been paid." : $"There are no {t.ShortName().ToLowerInvariant()} due for this student at the moment.")</p>
+        <a href="/pay/">Make a different payment</a>
+    </div>
+}
+else
+{
+    <form method="post" action="/pay/@t.Slug()/choose/" novalidate>
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="Reference" value="@f.Reference">
+        <input type="hidden" name="DobDay" value="@f.DobDay">
+        <input type="hidden" name="DobMonth" value="@f.DobMonth">
+        <input type="hidden" name="DobYear" value="@f.DobYear">
+
+        <div class="field @(itemsError is null ? null : "field--error")">
+            <fieldset aria-describedby="items-hint @(itemsError is null ? null : "items-error")">
+                <legend class="visually-hidden">Choose what to pay for</legend>
+                <span class="field__hint" id="items-hint">@(account.Charges.Count > 1 ? "Untick anything you'd rather pay later." : "Check the details, then continue.")</span>
+                @if (itemsError is not null) { <span class="field__error" id="items-error"><span class="visually-hidden">Error:</span> @itemsError</span> }
+                <div class="choices" id="items">
+                    @foreach (var c in account.Charges)
+                    {
+                        <label class="choice">
+                            <input type="checkbox" name="Items" value="@c.Key" checked="@f.Items.Contains(c.Key)">
+                            <span>
+                                <span class="choice__label">@c.Description</span>
+                                @if (c.Details is not null) { <span class="choice__meta">@c.Details</span> }
+                                @if (c.DueDate is { } due) { <span class="choice__meta">Due by @due.ToString("d MMMM yyyy", SiteContent.Uk)</span> }
+                            </span>
+                            <span class="choice__amount">@SiteContent.Money(c.Amount)</span>
+                        </label>
+                    }
+                </div>
+            </fieldset>
+        </div>
+
+        <button class="button" type="submit">Continue</button>
+    </form>
+}

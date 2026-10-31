@@ -1,0 +1,48 @@
+@inherits UmbracoViewPage<PaymentStepViewModel>
+@{
+    Layout = "Payments/_StepLayout";
+    ViewData["StepTitle"] = "Who is paying?";
+    var p = Model.Payment!;
+    var f = Model.Form;
+    Model.Errors.TryGetValue("payer", out var payerError);
+    Model.Errors.TryGetValue("name", out var nameError);
+    Model.Errors.TryGetValue("email", out var emailError);
+}
+
+<h1>Who is paying?</h1>
+<p>You're paying @SiteContent.Money(p.Amount) for <strong>@p.LearnerName</strong>.</p>
+
+<form method="post" action="/pay/@p.Id/details/" novalidate>
+    @Html.AntiForgeryToken()
+
+    <div class="field @(payerError is null ? null : "field--error")">
+        <fieldset aria-describedby="@(payerError is null ? null : "payer-error")">
+            <legend>Are you the student, or paying for them?</legend>
+            @if (payerError is not null) { <span class="field__error" id="payer-error"><span class="visually-hidden">Error:</span> @payerError</span> }
+            <div class="choices">
+                @foreach (var payer in Enum.GetValues<PayerType>())
+                {
+                    <label class="choice">
+                        <input type="radio" name="Payer" value="@payer" id="@(payer == PayerType.Learner ? "payer" : null)" checked="@(f.Payer == payer)">
+                        <span class="choice__label">@payer.PayerLabel()</span>
+                    </label>
+                }
+            </div>
+        </fieldset>
+    </div>
+
+    <div class="field @(nameError is null ? null : "field--error")">
+        <label for="name">Your full name</label>
+        @if (nameError is not null) { <span class="field__error" id="name-error"><span class="visually-hidden">Error:</span> @nameError</span> }
+        <input type="text" id="name" name="PayerName" value="@f.PayerName" autocomplete="name" aria-describedby="@(nameError is null ? null : "name-error")">
+    </div>
+
+    <div class="field @(emailError is null ? null : "field--error")">
+        <label for="email">Email address</label>
+        <span class="field__hint" id="email-hint">We'll send the receipt here.</span>
+        @if (emailError is not null) { <span class="field__error" id="email-error"><span class="visually-hidden">Error:</span> @emailError</span> }
+        <input type="email" id="email" name="PayerEmail" value="@f.PayerEmail" autocomplete="email" spellcheck="false" aria-describedby="email-hint @(emailError is null ? null : "email-error")">
+    </div>
+
+    <button class="button" type="submit">Continue</button>
+</form>

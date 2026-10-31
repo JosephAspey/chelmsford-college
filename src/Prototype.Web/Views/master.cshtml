@@ -1,0 +1,109 @@
+﻿@inherits UmbracoViewPage
+@{
+    var home = Model.Home();
+    var title = ViewData["Title"] as string ?? Model.Name;
+    var description = ViewData["Description"] as string ?? Model.Description();
+    var noticeText = home.Text(DocTypes.Home.NoticeText);
+    var noticeLink = home.Text(DocTypes.Home.NoticeLink);
+    var section = ViewData["Section"] as string ?? Model.AncestorOrSelf(2)?.ContentType.Alias;
+    var nav = home.Children()?.Where(c => c.IsVisible()).ToList() ?? [];
+}
+<!doctype html>
+<html lang="en-GB" class="no-js">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>@(Model.Id == home.Id && ViewData["Title"] is null ? "Chelmsford College | Courses, apprenticeships and adult learning" : $"{title} | Chelmsford College")</title>
+    <meta name="description" content="@description">
+    <meta name="theme-color" content="#007ac5">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;600;700;800&display=swap">
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true">
+    @await RenderSectionAsync("Head", required: false)
+</head>
+<body>
+    <a class="skip-link" href="#main">Skip to main content</a>
+
+    @if (noticeText is not null)
+    {
+        <div class="notice">
+            <div class="container">
+                <span class="notice__dot" aria-hidden="true"></span>
+                @if (noticeLink is not null)
+                {
+                    <a href="@noticeLink">@noticeText</a>
+                }
+                else
+                {
+                    <span>@noticeText</span>
+                }
+            </div>
+        </div>
+    }
+
+    <header class="site-header">
+        <div class="container">
+            <a class="brand" href="/">
+                <img src="/images/brand/cc-logo-colour.png" alt="Chelmsford College home" width="1167" height="231">
+            </a>
+            <button type="button" class="menu-toggle" aria-expanded="false" aria-controls="primary-nav" data-menu-toggle>
+                <span class="menu-toggle__bars" aria-hidden="true"></span> Menu
+            </button>
+            <nav id="primary-nav" class="primary-nav" aria-label="Main">
+                <ul>
+                    @foreach (var item in nav)
+                    {
+                        <li><a href="@item.Url()" aria-current="@(section == item.ContentType.Alias ? "page" : null)">@item.Name</a></li>
+                    }
+                    <li class="nav-cta"><a class="button button--block" href="/courses/">Apply for a course</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main id="main" tabindex="-1">
+        @RenderBody()
+    </main>
+
+    <footer class="site-footer">
+        <div class="container">
+            <div class="footer-grid">
+                <div>
+                    <img src="/images/brand/cc-logo-white.png" alt="Chelmsford College" width="1785" height="353" loading="lazy">
+                    <p>Moulsham Street campus and Princes Road campus, Chelmsford, Essex.</p>
+                </div>
+                <div>
+                    <h2>Study with us</h2>
+                    <ul>
+                        <li><a href="/courses/">Find a course</a></li>
+                        <li><a href="/events/">Open events</a></li>
+                        <li><a href="/courses/?q=apprenticeship">Apprenticeships</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h2>Students and parents</h2>
+                    <ul>
+                        <li><a href="/pay/">Pay online</a></li>
+                        <li><a href="mailto:careersadvicezone@chelmsford.ac.uk">Careers Advice Zone</a></li>
+                        <li><a href="mailto:studentfees@chelmsford.ac.uk">Student fees</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h2>About this site</h2>
+                    <ul>
+                        <li><a href="#">Accessibility statement</a></li>
+                        <li><a href="#">Privacy and cookies</a></li>
+                        <li><a href="/umbraco">Staff login (CMS)</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>Prototype built by Zim Digital for Chelmsford College's website tender. Course data from the college's demo course tables; people and payments are made up.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="~/js/site.js" asp-append-version="true" type="module"></script>
+</body>
+</html>

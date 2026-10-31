@@ -1,0 +1,136 @@
+﻿@inherits UmbracoViewPage<HomeViewModel>
+@{
+    Layout = "master.cshtml";
+    var cms = Model.Content;
+    var campaignImage = cms.Image(DocTypes.Home.CampaignImage);
+    var buttonText = cms.Text(DocTypes.Home.CampaignButtonText);
+    var buttonLink = cms.Text(DocTypes.Home.CampaignButtonLink);
+    var videoUrl = cms.Text(DocTypes.Home.VideoUrl);
+    var videoId = YouTube.Id(videoUrl);
+    var popular = Model.Subjects.OrderByDescending(s => s.Count).ThenBy(s => s.Label).Take(8).ToList();
+}
+
+<section class="hero" aria-labelledby="hero-heading">
+    @if (campaignImage is not null)
+    {
+        <div class="hero__media">
+            <picture>
+                <source media="(min-width: 64em)" srcset="@campaignImage.Crop(1920, 900)">
+                <img src="@campaignImage.Crop(900, 1100)" alt="" fetchpriority="high">
+            </picture>
+        </div>
+    }
+    <span class="hero__swoosh" aria-hidden="true"></span>
+    <div class="container hero__inner">
+        @if (cms.Text(DocTypes.Home.CampaignLabel) is { } label)
+        {
+            <p class="eyebrow">@label</p>
+        }
+        <h1 id="hero-heading">@cms.Text(DocTypes.Home.CampaignHeading)</h1>
+        @if (cms.Text(DocTypes.Home.CampaignText) is { } text)
+        {
+            <p class="hero__text">@text</p>
+        }
+
+        <form class="course-search" action="/courses/" method="get" role="search">
+            <label for="hero-search">What would you like to study?</label>
+            <div class="course-search__row">
+                <input id="hero-search" type="search" name="q" autocomplete="off" placeholder="For example: chef, nursing, electrician">
+                <button class="button" type="submit">@Icons.Get("search") Search courses</button>
+            </div>
+            <p class="course-search__hint">Or <a href="/courses/">browse all courses</a>, <a href="/courses/?q=t%20level">T Levels</a> and <a href="/courses/?q=apprenticeship">apprenticeships</a></p>
+        </form>
+
+        @if (buttonText is not null && buttonLink is not null)
+        {
+            <div class="hero__actions">
+                <a class="button button--green" href="@buttonLink">@buttonText @Icons.Get("arrow")</a>
+            </div>
+        }
+    </div>
+</section>
+
+<section class="section" aria-labelledby="subjects-heading">
+    <div class="container">
+        <p class="eyebrow">Explore</p>
+        <h2 id="subjects-heading">Popular subjects</h2>
+        <ul class="subjects">
+            @foreach (var s in popular)
+            {
+                <li><a href="/courses/?subject=@s.Value">@s.Label <span>@s.Count @(s.Count == 1 ? "course" : "courses")</span></a></li>
+            }
+        </ul>
+    </div>
+</section>
+
+<section class="section section--tint" aria-labelledby="messages-heading">
+    <div class="container">
+        <h2 id="messages-heading" class="visually-hidden">Why Chelmsford College</h2>
+        <div class="grid grid--3">
+            @for (var n = 1; n <= 3; n++)
+            {
+                var title = cms.Text(DocTypes.Home.MessageTitle(n));
+                if (title is null) { continue; }
+                var image = cms.Image(DocTypes.Home.MessageImage(n));
+                var link = cms.Text(DocTypes.Home.MessageLink(n));
+                <article class="card">
+                    @if (image is not null)
+                    {
+                        <div class="card__media"><img src="@image.Crop(720, 405)" alt="" loading="lazy" width="720" height="405"></div>
+                    }
+                    <div class="card__body">
+                        <h3 class="card__title">
+                            @if (link is not null) { <a href="@link">@title</a> } else { @title }
+                        </h3>
+                        <p class="card__text">@cms.Text(DocTypes.Home.MessageText(n))</p>
+                    </div>
+                </article>
+            }
+        </div>
+    </div>
+</section>
+
+<section class="section" aria-labelledby="video-heading">
+    <div class="container video">
+        <div>
+            <p class="eyebrow">Video</p>
+            <h2 id="video-heading">@cms.Text(DocTypes.Home.VideoHeading)</h2>
+            <p class="lead">@cms.Text(DocTypes.Home.VideoText)</p>
+        </div>
+        <div class="video__frame">
+            @if (cms.Image(DocTypes.Home.VideoImage) is { } cover)
+            {
+                <img src="@cover.Crop(1200, 675)" alt="" loading="lazy" width="1200" height="675">
+            }
+            @if (videoId is not null)
+            {
+                <button type="button" class="video__play" data-video-id="@videoId" data-video-title="@cms.Text(DocTypes.Home.VideoHeading)">
+                    <span class="video__play-icon">@Icons.Get("play")</span>
+                    <span class="visually-hidden">Play video: @cms.Text(DocTypes.Home.VideoHeading)</span>
+                </button>
+            }
+            else
+            {
+                <span class="video__caption">Add a YouTube link in the CMS to show a video here</span>
+            }
+        </div>
+    </div>
+</section>
+
+@if (Model.Upcoming.Count > 0)
+{
+    <section class="section section--tint" aria-labelledby="events-heading">
+        <div class="container">
+            <div class="results-summary">
+                <h2 id="events-heading">Coming up</h2>
+                <a href="/events/">All events</a>
+            </div>
+            <div class="grid grid--3">
+                @foreach (var e in Model.Upcoming)
+                {
+                    <partial name="_EventCard" model="e" />
+                }
+            </div>
+        </div>
+    </section>
+}

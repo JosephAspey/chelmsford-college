@@ -1,0 +1,180 @@
+@inherits UmbracoViewPage<CourseViewModel>
+@{
+    Layout = "master.cshtml";
+    var c = Model.Course;
+    var image = Model.Images.For(c);
+    var subjectIntro = Model.Images.IntroFor(c);
+    ViewData["Title"] = c.Title;
+    ViewData["Description"] = c.MetaDescription ?? $"{c.Title} at Chelmsford College. {c.StudyMode.Label()}, starting {c.StartDate}.";
+    ViewData["Section"] = DocTypes.CoursesPage.Alias;
+
+    var sections = new (string Id, string Heading, string? Html)[]
+    {
+        ("for-me", "Is this course for me?", c.Content.IsThisForMe),
+        ("study", "What you'll study", c.Content.WhatYouWillStudy),
+        ("entry", "Entry requirements", c.Content.EntryRequirements),
+        ("assessment", "How you'll be assessed", c.Content.Assessment),
+        ("qualification", "What you'll get", c.Content.Qualification),
+        ("next", "Where it leads", c.Content.WhereItLeads),
+        ("fees", "Fees and funding", c.Content.Fees),
+        ("costs", "Additional costs", c.Content.AdditionalCosts)
+    };
+}
+
+@section Head {
+    <script type="application/ld+json">
+        @Html.Raw(System.Text.Json.JsonSerializer.Serialize(new Dictionary<string, object?>
+        {
+            ["@context"] = "https://schema.org",
+            ["@type"] = "Course",
+            ["name"] = c.Title,
+            ["description"] = ViewData["Description"],
+            ["courseCode"] = c.CourseCode,
+            ["educationalLevel"] = c.Level?.Band.Label(),
+            ["provider"] = new Dictionary<string, string> { ["@type"] = "CollegeOrUniversity", ["name"] = "Chelmsford College" }
+        }))
+    </script>
+}
+
+<div class="course-hero">
+    <div class="course-hero__media">
+        @if (image is not null)
+        {
+            <picture>
+                <source media="(min-width: 64em)" srcset="@image.Crop(1000, 800)">
+                <img src="@image.Crop(900, 506)" alt="" fetchpriority="high">
+            </picture>
+        }
+    </div>
+    <div class="course-hero__inner">
+        <div class="container">
+            <nav class="breadcrumbs" aria-label="Breadcrumb">
+                <ol>
+                    <li><a href="/">Home</a></li>
+                    <li><a href="/courses/">Courses</a></li>
+                    <li><a href="/courses/?subject=@c.Subject.Slug">@c.Subject.Name</a></li>
+                </ol>
+            </nav>
+            <h1>@c.Title</h1>
+            <ul class="tags">
+                @if (c.Level is not null) { <li class="tag tag--green">@c.Level.Band.Label()</li> }
+                <li class="tag">@c.StudyMode.Label()</li>
+                <li class="tag">@c.Subject.Name</li>
+            </ul>
+            @if (subjectIntro is not null)
+            {
+                <p style="margin-top:1rem">@subjectIntro</p>
+            }
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    <dl class="key-facts">
+        <div><dt>Starts</dt><dd>@c.StartDate</dd></div>
+        <div><dt>Duration</dt><dd>@(c.Duration ?? "See course details")</dd></div>
+        <div><dt>Study mode</dt><dd>@c.StudyMode.Label()</dd></div>
+        @if (c.Level is not null)
+        {
+            <div><dt>Level</dt><dd>@c.Level.Band.Label()@if (c.Level.Band.Equivalent() is { } eq) { <br><span style="font-weight:600;font-size:.9rem">@eq</span> }</dd></div>
+        }
+        <div><dt>Course fee</dt><dd>@(c.Fee is { } fee ? SiteContent.Money(fee) : c.Content.Fees is not null ? "See fees and funding" : "Ask us about fees")</dd></div>
+        @if (c.CourseCode is not null)
+        {
+            <div><dt>Course code</dt><dd>@c.CourseCode</dd></div>
+        }
+    </dl>
+
+    <div class="course-layout">
+        <div>
+            <h2 class="visually-hidden">About this course</h2>
+            <div class="accordion-tools">
+                <button type="button" class="link-button" data-accordion-toggle="#course-sections" aria-controls="course-sections">Open all sections</button>
+            </div>
+            <div class="accordion" id="course-sections">
+                @foreach (var s in sections.Where(s => s.Html is not null))
+                {
+                    <details id="@s.Id" open="@(s.Id == "for-me" ? "open" : null)">
+                        <summary><h3 style="margin:0;font-size:inherit">@s.Heading</h3></summary>
+                        <div class="accordion__body rich-text">
+                            @Html.Raw(s.Html)
+                            @if (s.Id == "fees" && c.Funding.Count > 0)
+                            {
+                                <p><strong>Funding available for:</strong></p>
+                                <ul class="tags">@foreach (var f in c.Funding) { <li class="tag tag--plain">@f</li> }</ul>
+                            }
+                        </div>
+                    </details>
+                }
+            </div>
+
+            @if (Model.ShowBuildNotes)
+            {
+                <details class="build-notes">
+                    <summary>@Icons.Get("database") How this page is built (for the panel)</summary>
+                    <div class="build-notes__body">
+                        <p>There is one template for every course. This page is <code>/courses/@c.Id/@c.Slug/</code>: the number is <code>C_ID</code> in the college's <code>courses</code> table. The site reads the tables through a read-only connection and caches them for five minutes, so a change made in the college's own system appears here without anyone touching the CMS.</p>
+                        <table>
+                            <thead><tr><th>On the page</th><th>From</th></tr></thead>
+                            <tbody>
+                                <tr><td>Title, code, duration, start date</td><td><code>C_TITLE</code>, <code>C_COURSECODE</code>, <code>C_DURATION</code>, <code>C_STARTDATE</code></td></tr>
+                                <tr><td>Subject</td><td><code>C_SECTION</code> → <code>course_sections.S_TITLE</code></td></tr>
+                                <tr><td>Level</td><td><code>course_level_link</code> → <code>course_levels</code></td></tr>
+                                <tr><td>Study mode</td><td><code>C_MODE</code> (FT → Full time)</td></tr>
+                                <tr><td>Sections</td><td><code>C_COURSEFORME</code>, <code>C_STUDYOVERVIEW</code>, <code>C_ELIGIBILITY</code>, <code>C_ASSESSMENT</code>, <code>C_QUALIFICATION</code>, <code>C_EMPLOYABILITY</code>, <code>C_FEES</code>, <code>C_ADDITIONALFEES</code></td></tr>
+                                <tr><td>Funding</td><td><code>course_fund_link</code> → <code>course_funding</code></td></tr>
+                                <tr><td>Image and subject intro</td><td>The CMS: Courses › @(Model.Images.SubjectPage(c)?.Name ?? "default image")</td></tr>
+                            </tbody>
+                        </table>
+                        <p style="margin-top:.75rem">The HTML stored in the tables is cleaned on the way in: old inline styles and classes are removed, so every course looks consistent and meets WCAG 2.2 AA.</p>
+                    </div>
+                </details>
+            }
+        </div>
+
+        <aside class="course-aside" aria-label="Apply and next steps">
+            <div class="aside-card" id="apply" tabindex="-1">
+                <h2>Ready to apply?</h2>
+                <p>Applications are open for @c.StartDate. It takes about 10 minutes and you can save as you go.</p>
+                <a class="button button--block" href="#apply">Apply for this course</a>
+                @if (Model.ShowBuildNotes)
+                {
+                    <p style="margin:.75rem 0 0;font-size:.875rem"><span class="prototype-flag" style="margin:0">Prototype</span> In the live site this opens the college's application form, linked to UNIT-e. The application process is being agreed with the college.</p>
+                }
+            </div>
+            <div class="aside-card">
+                <h2>Been offered a place?</h2>
+                <p>Secure it by paying your course deposit online.</p>
+                <a class="button button--outline button--block" href="/pay/deposit/">Pay a deposit</a>
+            </div>
+            <div class="aside-card">
+                <h2>Questions?</h2>
+                <p>Come to an <a href="/events/">open event</a> or email <a href="mailto:careersadvicezone@chelmsford.ac.uk">careersadvicezone@chelmsford.ac.uk</a>.</p>
+            </div>
+        </aside>
+    </div>
+
+    @if (Model.Related.Count > 0)
+    {
+        <section class="section" aria-labelledby="related-heading" style="padding-top:0">
+            <h2 id="related-heading">More @c.Subject.Name courses</h2>
+            <ul class="course-list">
+                @foreach (var r in Model.Related)
+                {
+                    <li class="course-card">
+                        <div class="course-card__media">@if (Model.Images.For(r) is { } ri) { <img src="@ri.Crop(300, 300)" alt="" loading="lazy" width="300" height="300"> }</div>
+                        <div>
+                            <h3><a href="/courses/@r.Id/@r.Slug/">@r.Title</a></h3>
+                            <ul class="tags">@if (r.Level is not null) { <li class="tag">@r.Level.Band.Label()</li> }<li class="tag tag--plain">@r.StudyMode.Label()</li></ul>
+                        </div>
+                    </li>
+                }
+            </ul>
+        </section>
+    }
+</div>
+
+<div class="apply-bar">
+    <a class="button" href="#apply">Apply now</a>
+    <a class="button button--outline" href="/events/">Open events</a>
+</div>

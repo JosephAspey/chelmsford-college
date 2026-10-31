@@ -1,0 +1,143 @@
+﻿@inherits UmbracoViewPage<CoursesViewModel>
+@{
+    Layout = "master.cshtml";
+    var cms = Model.Content;
+    var q = Model.Query;
+    var r = Model.Result;
+    var filterCount = q.Subjects.Count + q.Levels.Count + q.Modes.Count;
+    ViewData["Title"] = string.IsNullOrWhiteSpace(q.Text) ? cms.Text(DocTypes.CoursesPage.Heading) : $"Courses matching \"{q.Text}\"";
+
+    string Link(Func<Dictionary<string, List<string>>, Dictionary<string, List<string>>> change, int pageNumber = 1)
+    {
+        var p = new Dictionary<string, List<string>>
+        {
+            ["q"] = string.IsNullOrWhiteSpace(q.Text) ? [] : [q.Text!],
+            ["subject"] = q.Subjects.ToList(),
+            ["level"] = q.Levels.Select(l => l.ToString()).ToList(),
+            ["mode"] = q.Modes.Select(m => m.ToString()).ToList()
+        };
+        p = change(p);
+        var parts = p.SelectMany(kv => kv.Value.Select(v => $"{kv.Key}={Uri.EscapeDataString(v)}")).ToList();
+        if (pageNumber > 1) parts.Add($"page={pageNumber}");
+        return "/courses/" + (parts.Count > 0 ? "?" + string.Join("&", parts) : "");
+    }
+    string Without(string key, string value) => Link(p => { p[key].Remove(value); return p; });
+}
+
+<div class="page-header">
+    <div class="container">
+        <nav class="breadcrumbs" aria-label="Breadcrumb"><ol><li><a href="/">Home</a></li><li aria-current="page">Courses</li></ol></nav>
+        <h1>@cms.Text(DocTypes.CoursesPage.Heading)</h1>
+        <p class="lead">@cms.Text(DocTypes.CoursesPage.Intro)</p>
+        <form action="/courses/" method="get" role="search" class="search-bar">
+            <label for="q" class="visually-hidden">Search courses</label>
+            <input id="q" type="search" name="q" value="@q.Text" placeholder="Subject, course or job, for example chef">
+            @foreach (var s in q.Subjects) { <input type="hidden" name="subject" value="@s"> }
+            @foreach (var l in q.Levels) { <input type="hidden" name="level" value="@l"> }
+            @foreach (var m in q.Modes) { <input type="hidden" name="mode" value="@m"> }
+            <button class="button" type="submit">@Icons.Get("search")<span class="visually-hidden">Search</span></button>
+        </form>
+    </div>
+</div>
+
+<div class="container search-layout">
+    <form action="/courses/" method="get" data-auto-submit aria-label="Filter courses">
+        @if (!string.IsNullOrWhiteSpace(q.Text)) { <input type="hidden" name="q" value="@q.Text"> }
+        <details class="filters" open="@(filterCount > 0 ? "open" : null)">
+            <summary>Filter courses@(filterCount > 0 ? $" ({filterCount})" : "")</summary>
+            <div class="filters__body">
+                <fieldset class="filter-group">
+                    <legend>Subject</legend>
+                    @foreach (var f in r.Subjects)
+                    {
+                        <label class="filter-option"><input type="checkbox" name="subject" value="@f.Value" checked="@f.Selected"> @f.Label <span class="filter-option__count">@f.Count</span></label>
+                    }
+                </fieldset>
+                <fieldset class="filter-group">
+                    <legend>Level</legend>
+                    @foreach (var f in r.Levels)
+                    {
+                        <label class="filter-option"><input type="checkbox" name="level" value="@f.Value" checked="@f.Selected"> @f.Label <span class="filter-option__count">@f.Count</span></label>
+                    }
+                </fieldset>
+                <fieldset class="filter-group">
+                    <legend>Study mode</legend>
+                    @foreach (var f in r.Modes)
+                    {
+                        <label class="filter-option"><input type="checkbox" name="mode" value="@f.Value" checked="@f.Selected"> @f.Label <span class="filter-option__count">@f.Count</span></label>
+                    }
+                </fieldset>
+                <div class="filter-group">
+                    <button class="button button--block" type="submit">Apply filters</button>
+                </div>
+            </div>
+        </details>
+    </form>
+
+    <section aria-labelledby="results-heading">
+        <div class="results-summary">
+            <p id="results-heading" role="status">
+                @r.Total @(r.Total == 1 ? "course" : "courses")@(string.IsNullOrWhiteSpace(q.Text) ? "" : $" for “{q.Text}”")
+            </p>
+            @if (filterCount > 0 || !string.IsNullOrWhiteSpace(q.Text))
+            {
+                <a href="/courses/">Clear search</a>
+            }
+        </div>
+
+        @if (filterCount > 0)
+        {
+            <ul class="active-filters" aria-label="Filters applied">
+                @foreach (var f in r.Subjects.Where(f => f.Selected)) { <li><a href="@Without("subject", f.Value)">@f.Label <span aria-hidden="true">×</span><span class="visually-hidden">, remove filter</span></a></li> }
+                @foreach (var f in r.Levels.Where(f => f.Selected)) { <li><a href="@Without("level", f.Value.ToString())">@f.Label <span aria-hidden="true">×</span><span class="visually-hidden">, remove filter</span></a></li> }
+                @foreach (var f in r.Modes.Where(f => f.Selected)) { <li><a href="@Without("mode", f.Value.ToString())">@f.Label <span aria-hidden="true">×</span><span class="visually-hidden">, remove filter</span></a></li> }
+            </ul>
+        }
+
+        @if (r.Total == 0)
+        {
+            <div class="empty">
+                <h2>No courses match</h2>
+                <p>Try a different word, or remove a filter. You can also <a href="/courses/">browse every course</a> or email <a href="mailto:careersadvicezone@chelmsford.ac.uk">the Careers Advice Zone</a> for help choosing.</p>
+            </div>
+        }
+        else
+        {
+            <ul class="course-list">
+                @foreach (var c in r.Courses)
+                {
+                    var img = Model.Images.For(c);
+                    <li class="course-card">
+                        <div class="course-card__media">
+                            @if (img is not null) { <img src="@img.Crop(300, 300)" alt="" loading="lazy" width="300" height="300"> }
+                        </div>
+                        <div>
+                            <span class="course-card__subject">@c.Subject.Name</span>
+                            <h3><a href="/courses/@c.Id/@c.Slug/">@c.Title</a></h3>
+                            <ul class="tags">
+                                @if (c.Level is not null) { <li class="tag">@c.Level.Band.Label()</li> }
+                                <li class="tag tag--plain">@c.StudyMode.Label()</li>
+                            </ul>
+                            <p class="course-card__facts">Starts @c.StartDate@(c.Duration is null ? "" : $" · {c.Duration}")</p>
+                        </div>
+                    </li>
+                }
+            </ul>
+
+            @if (r.PageCount > 1)
+            {
+                <nav aria-label="Pages of results">
+                    <ul class="pagination">
+                        @for (var p = 1; p <= r.PageCount; p++)
+                        {
+                            <li>
+                                @if (p == r.Page) { <span aria-current="page">@p</span> }
+                                else { <a href="@Link(x => x, p)" aria-label="Page @p">@p</a> }
+                            </li>
+                        }
+                    </ul>
+                </nav>
+            }
+        }
+    </section>
+</div>

@@ -1,0 +1,45 @@
+@inherits UmbracoViewPage<PaymentStepViewModel>
+@{
+    Layout = "Payments/_StepLayout";
+    ViewData["StepTitle"] = "Check and pay";
+    var p = Model.Payment!;
+}
+
+@if (Model.Message is not null)
+{
+    <div class="banner-warning" role="alert"><strong>@Model.Message</strong></div>
+}
+
+<h1>Check your payment</h1>
+
+<dl class="summary-list">
+    <div><dt>Student</dt><dd>@p.LearnerName</dd><dd></dd></div>
+    <div><dt>@p.Type.ReferenceLabel()</dt><dd>@p.LearnerRef</dd><dd></dd></div>
+    @if (Model.CourseTitle is not null)
+    {
+        <div><dt>Course</dt><dd>@Model.CourseTitle</dd><dd></dd></div>
+    }
+    <div>
+        <dt>Paying for</dt>
+        <dd>
+            @foreach (var item in p.Items)
+            {
+                <span style="display:flex;justify-content:space-between;gap:1rem"><span>@item.Description</span><span>@SiteContent.Money(item.Amount)</span></span>
+            }
+        </dd>
+        <dd></dd>
+    </div>
+    <div>
+        <dt>Paid by</dt>
+        <dd>@p.PayerName<br><span style="color:var(--ink-soft)">@p.PayerEmail · @(p.PayerType == PayerType.Learner ? "the student" : "parent or carer")</span></dd>
+        <dd class="change"><a href="/pay/@p.Id/details/">Change<span class="visually-hidden"> who is paying</span></a></dd>
+    </div>
+</dl>
+
+<p class="total"><span>Total to pay</span><span>@SiteContent.Money(p.Amount)</span></p>
+
+<form method="post" action="/pay/@p.Id/review/">
+    @Html.AntiForgeryToken()
+    <button class="button" type="submit">@Icons.Get("lock") Pay @SiteContent.Money(p.Amount) securely</button>
+</form>
+<p class="secure-note" style="margin-top:1rem">You'll go to our payment provider's page to enter your card details, then come back here for your receipt.</p>

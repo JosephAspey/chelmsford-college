@@ -1,0 +1,46 @@
+@inherits UmbracoViewPage<PaymentStepViewModel>
+@{
+    Layout = "~/Views/master.cshtml";
+    var cms = Model.Content;
+    var title = ViewData["StepTitle"] as string ?? Model.Type.Title();
+    ViewData["Title"] = (Model.Errors.Count > 0 ? "Error: " : "") + title + " | Pay online";
+    ViewData["Section"] = DocTypes.PaymentsPage.Alias;
+}
+
+<div class="container pay-layout">
+    <div class="pay-main">
+        <nav class="breadcrumbs" aria-label="Breadcrumb"><ol><li><a href="/">Home</a></li><li><a href="/pay/">Pay online</a></li><li aria-current="page">@Model.Type.ShortName()</li></ol></nav>
+        @if (Model.Step <= PaymentStepViewModel.StepCount)
+        {
+            <p class="step-label">Step @Model.Step of @PaymentStepViewModel.StepCount<span class="visually-hidden">: @title</span></p>
+            <ol class="steps" aria-hidden="true">
+                @for (var i = 1; i <= PaymentStepViewModel.StepCount; i++)
+                {
+                    <li class="@(i < Model.Step ? "is-done" : null)" aria-current="@(i == Model.Step ? "step" : null)"></li>
+                }
+            </ol>
+        }
+
+        @if (Model.Errors.Count > 0)
+        {
+            <div class="error-summary" role="alert" tabindex="-1" data-error-summary>
+                <h2>There is a problem</h2>
+                <ul>
+                    @foreach (var (field, message) in Model.Errors)
+                    {
+                        <li><a href="#@field">@message</a></li>
+                    }
+                </ul>
+            </div>
+        }
+
+        @RenderBody()
+    </div>
+
+    <aside aria-label="Help with paying">
+        <div class="aside-card rich-text">@cms.Rich(DocTypes.PaymentsPage.HelpText)</div>
+        <p class="secure-note">@Icons.Get("lock") Payments are taken by the college's payment provider. Card details never reach the college's website.</p>
+    </aside>
+</div>
+
+<script>document.querySelector('[data-error-summary]')?.focus();</script>

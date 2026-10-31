@@ -1,0 +1,79 @@
+@model Prototype.Web.Controllers.DemoCheckoutViewModel
+@{
+    Layout = null;
+    var c = Model.Checkout;
+    var amount = Prototype.Web.Site.SiteContent.Money(c.Amount);
+}
+<!doctype html>
+<html lang="en-GB">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Pay @amount | Demo payment provider</title>
+    <style>
+        :root { --ink: #1a1f36; --soft: #5b6478; --line: #d8dce6; --accent: #4b45c6; --focus: #ffdd00; }
+        * { box-sizing: border-box; }
+        body { margin: 0; font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif; color: var(--ink); background: #f3f4f8; }
+        .bar { background: #fff3c4; color: #5c4400; text-align: center; padding: .5rem 1rem; font-size: .875rem; font-weight: 600; }
+        main { max-width: 28rem; margin: 2rem auto; padding: 0 1rem; }
+        .merchant { display: flex; align-items: center; gap: .75rem; margin-bottom: 1.25rem; }
+        .merchant img { width: 9rem; }
+        .panel { background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 1.5rem; box-shadow: 0 6px 24px rgb(26 31 54 / 8%); }
+        .amount { font-size: 2rem; font-weight: 800; margin: 0; }
+        .desc { color: var(--soft); margin: .25rem 0 1.25rem; font-size: .9375rem; }
+        label { display: block; font-weight: 600; margin-bottom: .35rem; font-size: .9375rem; }
+        input { width: 100%; padding: .75rem .85rem; font: inherit; border: 1px solid #a9b0c2; border-radius: 8px; }
+        .row { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; }
+        .field { margin-bottom: 1rem; }
+        .error { color: #b42318; font-weight: 600; margin: 0 0 .75rem; }
+        button { width: 100%; padding: .9rem; font: inherit; font-weight: 700; color: #fff; background: var(--accent); border: 0; border-radius: 8px; cursor: pointer; }
+        .cancel { margin-top: .75rem; background: none; color: var(--accent); text-decoration: underline; }
+        :focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+        .hint { font-size: .8125rem; color: var(--soft); margin-top: 1.25rem; }
+        code { background: #eef0f6; padding: .1rem .3rem; border-radius: 4px; }
+        footer { text-align: center; color: var(--soft); font-size: .8125rem; margin-top: 1.5rem; }
+    </style>
+</head>
+<body>
+    <div class="bar">Demo payment provider: in the live site this page belongs to ParentPay, Stripe or the provider the college chooses. No real payments are taken.</div>
+    <main>
+        <div class="merchant">
+            <img src="/images/brand/cc-logo-colour.png" alt="Chelmsford College">
+        </div>
+        <div class="panel">
+            <p class="amount">@amount</p>
+            <p class="desc">@c.Description · Ref @c.Reference</p>
+
+            @if (Model.Error is not null)
+            {
+                <p class="error" role="alert">@Model.Error</p>
+            }
+
+            <form method="post" action="/demo-provider/checkout/@c.Id/pay" novalidate>
+                @Html.AntiForgeryToken()
+                <div class="field">
+                    <label for="email">Email</label>
+                    <input id="email" type="email" value="@c.Email" readonly>
+                </div>
+                <div class="field">
+                    <label for="card">Card number</label>
+                    <input id="card" name="cardNumber" inputmode="numeric" autocomplete="cc-number" placeholder="1234 1234 1234 1234" data-card-number>
+                </div>
+                <div class="row">
+                    <div class="field"><label for="exp">Expiry</label><input id="exp" autocomplete="cc-exp" placeholder="MM / YY" value="12 / 29"></div>
+                    <div class="field"><label for="cvc">Security code</label><input id="cvc" autocomplete="cc-csc" placeholder="CVC" value="123"></div>
+                </div>
+                <button type="submit">Pay @amount</button>
+            </form>
+            <form method="post" action="/demo-provider/checkout/@c.Id/cancel">
+                @Html.AntiForgeryToken()
+                <button type="submit" class="cancel">Cancel and go back</button>
+            </form>
+
+            <p class="hint">Test cards: <code>4242 4242 4242 4242</code> succeeds, <code>4000 0000 0000 0002</code> is declined.</p>
+        </div>
+        <footer>Secure checkout · Card details are handled by the payment provider</footer>
+    </main>
+    <script src="/js/site.js" type="module"></script>
+</body>
+</html>

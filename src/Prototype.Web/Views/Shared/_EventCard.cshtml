@@ -1,0 +1,16 @@
+@model EventItem
+<article class="event-card">
+    <div class="date-badge" aria-hidden="true">
+        <span class="date-badge__day">@Model.Start.Day</span>
+        <span class="date-badge__month">@Model.Start.ToString("MMM", SiteContent.Uk)</span>
+    </div>
+    <div>
+        <span class="tag tag--green">@Model.Type</span>
+        <h3><a href="@Model.Url">@Model.Name</a></h3>
+        <p class="event-card__meta"><span class="visually-hidden">Date: </span>@Model.Date, @Model.Times</p>
+        @if (Model.Location is not null)
+        {
+            <p class="event-card__meta">@Model.Location</p>
+        }
+    </div>
+</article>

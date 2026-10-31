@@ -1,0 +1,66 @@
+@inherits UmbracoViewPage<PaymentStepViewModel>
+@inject Microsoft.Extensions.Options.IOptions<Prototype.Web.Startup.PrototypeOptions> Options
+@{
+    Layout = "Payments/_StepLayout";
+    var t = Model.Type;
+    var f = Model.Form;
+    Model.Errors.TryGetValue("reference", out var refError);
+    Model.Errors.TryGetValue("dob", out var dobError);
+}
+
+<h1>@t.Title()</h1>
+<p>Students, parents and carers can all pay. We'll use the student's details to find what's due.</p>
+
+<form method="post" action="/pay/@t.Slug()/" novalidate>
+    @Html.AntiForgeryToken()
+
+    <div class="field @(refError is null ? null : "field--error")">
+        <label for="reference">@t.ReferenceLabel()</label>
+        <span class="field__hint" id="reference-hint">@t.ReferenceHint()</span>
+        @if (refError is not null) { <span class="field__error" id="reference-error"><span class="visually-hidden">Error:</span> @refError</span> }
+        <input type="text" id="reference" name="Reference" value="@f.Reference" autocomplete="off" spellcheck="false"
+               aria-describedby="reference-hint @(refError is null ? null : "reference-error")" style="max-width:16rem">
+    </div>
+
+    <div class="field @(dobError is null ? null : "field--error")">
+        <fieldset role="group" aria-describedby="dob-hint @(dobError is null ? null : "dob-error")">
+            <legend>Student's date of birth</legend>
+            <span class="field__hint" id="dob-hint">For example, 27 3 2009</span>
+            @if (dobError is not null) { <span class="field__error" id="dob-error"><span class="visually-hidden">Error:</span> @dobError</span> }
+            <div class="date-input">
+                <div class="date-input__item"><label for="dob">Day</label><input type="text" id="dob" name="DobDay" value="@f.DobDay" inputmode="numeric" maxlength="2"></div>
+                <div class="date-input__item"><label for="dob-month">Month</label><input type="text" id="dob-month" name="DobMonth" value="@f.DobMonth" inputmode="numeric" maxlength="2"></div>
+                <div class="date-input__item date-input__item--year"><label for="dob-year">Year</label><input type="text" id="dob-year" name="DobYear" value="@f.DobYear" inputmode="numeric" maxlength="4"></div>
+            </div>
+        </fieldset>
+    </div>
+
+    <button class="button" type="submit">Continue</button>
+</form>
+
+@if (Options.Value.ShowBuildNotes)
+{
+    <details class="build-notes">
+        <summary>Test details for the demo</summary>
+        <div class="build-notes__body">
+            <p>These people are made up. In the live site the details are checked against UNIT-e and the college's finance records.</p>
+            <table>
+                <thead><tr><th>@t.ReferenceLabel()</th><th>Date of birth</th><th>Student</th></tr></thead>
+                <tbody>
+                    @if (t == PaymentType.Deposit)
+                    {
+                        <tr><td><code>APP-24817</code></td><td>12 4 2010</td><td>Maisie Turner, Fashion Design</td></tr>
+                        <tr><td><code>APP-24822</code></td><td>3 9 2010</td><td>Leon Okafor, Professional Cookery</td></tr>
+                        <tr><td><code>APP-24863</code></td><td>18 6 2005</td><td>Grace Bennett, Access to HE (adult)</td></tr>
+                    }
+                    else
+                    {
+                        <tr><td><code>2610451</code></td><td>21 5 2009</td><td>Ella Richardson, Fashion Design</td></tr>
+                        <tr><td><code>2610477</code></td><td>14 8 2009</td><td>Kai Mensah, Professional Cookery</td></tr>
+                        <tr><td><code>2610519</code></td><td>9 12 2008</td><td>Ryan Patel, Electrical Installation</td></tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </details>
+}

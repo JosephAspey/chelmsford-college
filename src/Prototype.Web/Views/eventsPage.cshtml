@@ -1,0 +1,50 @@
+﻿@inherits UmbracoViewPage<EventsViewModel>
+@{
+    Layout = "master.cshtml";
+    var cms = Model.Content;
+    string Link(string? type) => "/events/" + (type is null && !Model.Past ? "" : "?" + string.Join("&", new[] { type is null ? null : $"type={type}", Model.Past ? "past=true" : null }.Where(p => p is not null)));
+}
+
+<div class="page-header">
+    <div class="container">
+        <nav class="breadcrumbs" aria-label="Breadcrumb"><ol><li><a href="/">Home</a></li><li aria-current="page">Events</li></ol></nav>
+        <h1>@cms.Text(DocTypes.EventsPage.Heading)</h1>
+        <p class="lead">@cms.Text(DocTypes.EventsPage.Intro)</p>
+    </div>
+</div>
+
+<div class="container section">
+    <nav aria-label="Filter events by type">
+        <ul class="event-filters">
+            <li><a href="@Link(null)" aria-current="@(Model.Type is null ? "true" : null)">All events</a></li>
+            @foreach (var t in Model.Types)
+            {
+                var slug = CourseLabels.Slug(t);
+                <li><a href="@Link(slug)" aria-current="@(Model.Type == slug ? "true" : null)">@t</a></li>
+            }
+        </ul>
+    </nav>
+
+    @if (Model.Events.Count == 0)
+    {
+        <div class="empty">
+            <h2>No events to show</h2>
+            <p>@(Model.Past ? "There are no past events of this type." : "New dates are added regularly.") <a href="/events/">See all events</a></p>
+        </div>
+    }
+
+    @foreach (var month in Model.Events.GroupBy(e => new DateTime(e.Start.Year, e.Start.Month, 1)))
+    {
+        <h2 class="event-month">@month.Key.ToString("MMMM yyyy", SiteContent.Uk)</h2>
+        <div class="grid grid--2">
+            @foreach (var e in month)
+            {
+                <partial name="_EventCard" model="e" />
+            }
+        </div>
+    }
+
+    <p style="margin-top:2rem">
+        @if (Model.Past) { <a href="/events/">Show upcoming events</a> } else { <a href="/events/?past=true">Show past events</a> }
+    </p>
+</div>
